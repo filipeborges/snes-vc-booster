@@ -352,6 +352,7 @@ int main (int argc, char *argv[])
   int fullLimit1 = 0;
   bool lineBroke = false;
   int checksum = 0;
+  int hasModified = 0;
 
   printf("\n\n");
   printf("~ SNES VC Booster ~  by %s\n\n\n", name);
@@ -605,6 +606,7 @@ int main (int argc, char *argv[])
 					// Begin the magic
 					
 					if(boost_volume && memcmp(&datBuf[p], volume, 4) == 0) {
+						hasModified = 1;
 						boost_volume = 0;
 						datBuf[p+2] = 2;
 						
@@ -618,6 +620,7 @@ int main (int argc, char *argv[])
 							printf("Volume pattern is at an unusual spot,\nensure volume hasn't been patched already!\n\n");
 					}
 					else if(no_playRec && memcmp(&datBuf[p], playRec, 9) == 0) {
+						hasModified = 1;
 						no_playRec = 0;
 						datBuf[p+8]  = 0x60; // nopping this bl prevents the game from updating
 						datBuf[p+9]  = 0;    // the playlog every minute, but still updates when exiting.
@@ -630,6 +633,7 @@ int main (int argc, char *argv[])
 							printf("Removed 1-minute playlog updates!\n");
 					}
 					else if(no_dark && memcmp(&datBuf[p], dark_kby, 8) == 0) {
+						hasModified = 1;
 						no_dark = 0;
 						memcpy(&datBuf[p], max_white, 4);
 						
@@ -640,6 +644,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(!isKirbySS && no_dark && memcmp(&datBuf[p], dark_ff, 4) == 0) {
+						hasModified = 1;
 						no_dark = 0;
 						datBuf[p+3] = 0xFF;
 						printf("Removed dark filter! Type: 12%% black, 0xE0E0E0 whites - Final Fantasy II, Secret of Mana, ");
@@ -651,6 +656,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(no_dark && memcmp(&datBuf[p], dark_kbydc, 0x14) == 0) {
+						hasModified = 1;
 						no_dark = 0;
 						// TODO: test search on JPN/PAL/KOR, instead of hardcoding address to 0x6618 (NTSC-U only)
 						memcpy(&datBuf[p+8], kbydc_white, 0xC);
@@ -662,6 +668,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(no_ccAd && memcmp(&datBuf[p], cc_advertise, 0x1D) == 0) {
+						hasModified = 1;
 						no_ccAd = 0;
 						
 						// "Press the A Button to return to the Wii Menu." screen removal
@@ -684,6 +691,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(gc_remap && memcmp(&datBuf[p], gc_map_1, 0x5C) == 0) {
+						hasModified = 1;
 						gc_remap = 0;
 						memcpy(&datBuf[p], gc_map_1_alt, 0x5C);
 						printf("Found GC mappings type 1 (Super Mario World, Super Metroid) affects P1 and P2.\n");
@@ -695,9 +703,8 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(gc_remap && memcmp(&datBuf[p], gc_map_2, 0x1C) == 0) {
-						// Remove this line to apply multiple times
-						//gc_remap = 0;
-						//--gc_remap;
+						hasModified = 1;
+						gc_remap = 0;
 						
 						memcpy(&datBuf[p], gc_map_2_alt, 0x10);
 						//printf("Found GC mappings type 2 (FFII, Chrono Trigger)\n");
@@ -709,7 +716,8 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(gc_remap && memcmp(&datBuf[p], gc_map_2_p2, 0x24) == 0) {
-						gc_remap = 5; // apply 5 times, for patch 2/2 no idea why it's 5 instead of 4
+						hasModified = 1;
+						gc_remap = 0;
 						memcpy(&datBuf[p], gc_map_2_p2_alt, 0x10);
 						printf("Found GC mappings type 2 (FFII, Chrono Trigger)\n");
 						printf("Adjusted GC mappings. 1/2 ");
@@ -720,6 +728,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if((no_check == 1) && memcmp(&datBuf[p], romheader_patch_1, 0x5) == 0) {
+						hasModified = 1;
 						no_check = 0;
 						datBuf[p+4] = 0x60;
 						datBuf[p+5] = 0x00;
@@ -733,6 +742,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if((no_check == 1) && memcmp(&datBuf[p], romheader_patch_2, 0x5) == 0) {
+						hasModified = 1;
 						no_check = 0;
 						datBuf[p+4] = 0x60;
 						datBuf[p+5] = 0x00;
@@ -746,6 +756,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if((no_check == 1) && memcmp(&datBuf[p], romheader_patch_3, 0x5) == 0) {
+						hasModified = 1;
 						no_check = 0;
 						datBuf[p+4] = 0x60;
 						datBuf[p+5] = 0x00;
@@ -772,6 +783,7 @@ int main (int argc, char *argv[])
 							uint16_t b = 0;
 							for(b = 0; b < 0x500; b+=4) {
 								if(datBuf[p+b] == 0x4E && datBuf[p+b+3] == 0x20) {
+									hasModified = 1;
 									b -= 0x10;
 									datBuf[p] = 0x48;
 									datBuf[p+1] = 0x00;
@@ -800,6 +812,7 @@ int main (int argc, char *argv[])
 							uint16_t b = 0;
 							for(b = 0; b < 0x500; b+=4) {
 								if(datBuf[p+b] == 0x4E && datBuf[p+b+3] == 0x20) {
+									hasModified = 1;
 									b -= 0x10;
 									datBuf[p] = 0x48;
 									datBuf[p+1] = 0x00;
@@ -819,6 +832,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(no_opera && memcmp(&datBuf[p], opera_patch_ignition_p1, 21) == 0) {
+						hasModified = 1;
 					//	no_opera = 0;
 						datBuf[p+0xC] = 0x60;
 						datBuf[p+0xD] = 0x00;
@@ -844,6 +858,7 @@ int main (int argc, char *argv[])
 					}
 					else if(no_opera && memcmp(&datBuf[p], opera_patch_megamanx2_p1, 21) == 0) {
 					//	no_opera = 0;
+						hasModified = 1;
 						datBuf[p+0xC] = 0x60;
 						datBuf[p+0xD] = 0x00;
 						datBuf[p+0xE] = 0x00;
@@ -868,6 +883,7 @@ int main (int argc, char *argv[])
 					}
 					else if(no_hbmse && memcmp(&datBuf[p], hbmse_patch_megamanx2_p1, 21) == 0) {
 					//	no_hbmse = 0;
+						hasModified = 1;
 						datBuf[p+0xC] = 0x60;
 						datBuf[p+0xD] = 0x00;
 						datBuf[p+0xE] = 0x00;
@@ -892,6 +908,7 @@ int main (int argc, char *argv[])
 					}
 					else if(no_hbmse && memcmp(&datBuf[p], hbmse_patch_ignition_p1, 20) == 0) {
 					//	no_hbmse = 0;
+						hasModified = 1;
 						datBuf[p+0xC] = 0x60;
 						datBuf[p+0xD] = 0x00;
 						datBuf[p+0xE] = 0x00;
@@ -915,6 +932,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(no_opera && memcmp(&datBuf[p], opera_patch, 0xD) == 0) {
+						hasModified = 1;
 						no_opera = 0;
 						datBuf[p] = 0x48;
 						datBuf[p+1] = 0x00;
@@ -926,6 +944,7 @@ int main (int argc, char *argv[])
 					//	wideWant = 0;
 						if(datBuf[p-4] == 0x48 && datBuf[p+8] == 0x98 && (datBuf[p+6] == 0x86 || datBuf[p+6] == 0x87)) {
 							// copy the bl
+							hasModified = 1;
 							unsigned bakBL = 0;
 							memcpy(&bakBL, &datBuf[p-4], 4);
 							
@@ -970,67 +989,32 @@ int main (int argc, char *argv[])
 								printf("\n");
 						}
 					}
-				#if 0
-					else if(wideWant && memcmp(&datBuf[p], conf_aspect, sizeof(conf_aspect)) == 0) {
-					//	wideWant = 0;
-					//	memcpy(&datBuf[p], ???, sizeof());
-						
-						// TODO
-						if(datBuf[p+0x3C] == 0x98) {
-							// branch, OG instr 98010008
-							
-							
-							printf("Found widescreen checking function! Injected new code.\n");
-						}
-					}
-				#endif
-				#if 0 // obvious trouble doing this: can't inject ASM easily
-					else if(pixel_perf && memcmp(&datBuf[p], pixel_scale_1, sizeof(pixel_scale_1)) == 0) {
-					//	pixel_perf = 0;
-						memcpy(&datBuf[p], pixel_scale_patch, sizeof(pixel_scale_patch));
-						printf("Applied pixel-perfect patch! Type 1 HOME Menu, Ignition Factor\n");
-					}
-				#endif
-				#if 0
-					else if(pixel_perf && memcmp(&datBuf[p], find_video, sizeof(find_video)) == 0) {
-						if(datBuf[p-0x2C] == 0 && datBuf[p-0x26] == 0x28 && datBuf[p-0x22] == 0x80) {
-							datBuf[p-0x26] = 0x68;
-							datBuf[p-0x22] = 0x00;
-							printf("Applied pixel-perfect patch! Type 1, Ignition Factor\n");
-						}
-					//	pixel_perf = 0;
-					}
-				#endif
-				#if 0 // apparently crashes on real hardware
-					else if(no_opera && strcmp((const char*)datBuf+p, "/tmp/opera.arc") == 0) {
-						no_opera = 0;
-						datBuf[p+5] = 0;
-						printf("Removed opera.arc!\n");
-					}
-				#endif
-				#if 1
 					else if(no_hbmse && strcmp((const char*)datBuf+p, "/tmp/HBMSE.arc") == 0) {
+						hasModified = 1;
 						no_hbmse = 0;
 						datBuf[p+5] = 0;
 						printf("Removed HBMSE.arc path!\n");
 					}
-				#endif
 					else if(no_save && strcmp((const char*)datBuf+p, "/tmp/savedata.bin") == 0) {
+						hasModified = 1;
 						no_save = 0;
 						datBuf[p+5] = 0;
 						printf("Removed SRAM creation!\n");
 					}
 					else if(no_qsave && strcmp((const char*)datBuf+p, "nocopy/qsdata.bin") == 0) {
+						hasModified = 1;
 						qsave = 1;
 						datBuf[p+7] = 0;
 					}
 					else if((qsave == 1) && strcmp((const char*)datBuf+p, "nocopy/dummy") == 0) {
+						hasModified = 1;
 						qsave = 2;
 						no_qsave = 0;
 						datBuf[p+7] = 0;
 						printf("Removed suspend feature!\n");
 					}
 					else if((qsave == 2) && strcmp((const char*)datBuf+p, "/tmp/dummy") == 0) {
+						hasModified = 1;
 						qsave = 0;
 						no_qsave = 0;
 						datBuf[p+5] = 0;
@@ -1038,6 +1022,7 @@ int main (int argc, char *argv[])
 						printf("This may trigger a \"files corrupt\" screen!\n");
 					}
 					else if((wiimote == 1) && memcmp(&datBuf[p], wiimoteHook, 0x18) == 0) {
+						hasModified = 1;
 						wiimote = p;
 						printf("Found type 1 hook for Wii Remote. ");
 						
@@ -1047,6 +1032,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if((wiimote == 1) && memcmp(&datBuf[p], wiimoteHook2, 0xD) == 0) {
+						hasModified = 1;
 						wiimote = p;
 						printf("Found type 2 hook for Wii Remote. ");
 						
@@ -1056,6 +1042,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if((wiimote == 1) && memcmp(&datBuf[p], wiimoteHook3, 0xD) == 0) {
+						hasModified = 1;
 						wiimote = p;
 						printf("Found type 3 hook for Wii Remote. ");
 						
@@ -1067,6 +1054,7 @@ int main (int argc, char *argv[])
 							printf("\n");
 					}
 					else if(wiimoteNative && memcmp(&datBuf[p], wiimote_native, 0x7) == 0) {
+						hasModified = 1;
 						wiimoteNative = 0;
 						wiimote = 0;
 						
@@ -1395,16 +1383,12 @@ int main (int argc, char *argv[])
 					}
 				}
 				
-			//	printf("Show me: %s,,", &datBuf[0x1357B4]);
-				
-			//	int allLines = CountAllLines(datBuf, fileSz);
-			//	int outSize = TweakData(datBuf, 480, fileSz, allLines, outBuf);
-				
 				// write file
-			#if 1
+			if (hasModified) {
 				FILE* fout = fopen("01_boosted.app", "wb");
 				fwrite(datBuf, 1, fileSz, fout);
 				fclose(fout);
+			}
 			#endif
 				free(datBuf);
 				
