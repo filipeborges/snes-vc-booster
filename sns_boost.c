@@ -11,6 +11,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef _MSC_VER 
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 static const char proj[] = "PROJECT SNES BOOSTER";
 
 const char name[] = "Diego A.";
@@ -382,18 +387,18 @@ int main (int argc, char *argv[])
 
   int workType = 1;
   FILE *fd = NULL;
+  char* inputFileName = NULL;
 
   if(argc > 1) {
     for(i = 1; i < (argc); i++) {
-            //need to handle special characters or commands
-			
 			if(strcmp(argv[i], "-i") == 0) {
-				fd = fopen(argv[i+1], "rb");
+				inputFileName = argv[i+1];
+				fd = fopen(inputFileName, "rb");
 				if(fd == NULL) {
 					printf("Failed to open file!\nAre you sure this is correct?\n\n");
 					break;
 				} else {
-					printf("Opened file for reading: %s\n\n", argv[i+1]);
+					printf("Opened file for reading: %s\n\n", inputFileName);
 					++workType;
 				}
 			}
@@ -1385,11 +1390,10 @@ int main (int argc, char *argv[])
 				
 				// write file
 			if (hasModified) {
-				FILE* fout = fopen("01_boosted.app", "wb");
+				FILE* fout = fopen(inputFileName, "wb");
 				fwrite(datBuf, 1, fileSz, fout);
 				fclose(fout);
 			}
-			#endif
 				free(datBuf);
 				
 				printf("\n");
